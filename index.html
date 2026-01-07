@@ -2,13 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Illuminati - Matrix Binary Edition</title>
 <style>
   * { box-sizing: border-box; }
   body {
     margin: 0;
     height: 100vh;
-    background: #010501; /* Fondo base muy oscuro */
+    background: #010501;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -23,7 +24,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Detrás de la carta y el personaje */
+    z-index: -1;
   }
 
   /* --- CARTA --- */
@@ -31,7 +32,7 @@
     position: relative;
     width: 380px; 
     height: 590px; 
-    background: rgba(0, 0, 0, 0.9); /* Ligeramente transparente para ver el fondo */
+    background: rgba(0, 0, 0, 0.9);
     background-image: 
         radial-gradient(circle at 50% 50%, rgba(0, 255, 100, 0.05) 0%, transparent 80%),
         url('https://www.transparenttextures.com/patterns/money.png'); 
@@ -41,6 +42,7 @@
     box-shadow: 0 0 40px rgba(0, 255, 80, 0.2);
     animation: breathe 8s infinite ease-in-out;
     z-index: 10;
+    transition: transform 0.3s ease; /* Suaviza el cambio de escala */
   }
 
   @keyframes breathe {
@@ -48,17 +50,14 @@
     50% { box-shadow: 0 0 60px rgba(0, 255, 100, 0.3); border-color: #1a3300; }
   }
 
+  /* --- ELEMENTOS INTERNOS DE LA CARTA --- */
   .all-seeing-eye {
     position: absolute; top: 60px; left: 10%; transform: translateX(-50%);
     width: 280px; opacity: 0.1; z-index: 1;
     filter: sepia(1) saturate(5) hue-rotate(90deg);
     animation: eyeFade 10s infinite alternate ease-in-out;
   }
-  @keyframes eyeFade {
-    0% { opacity: 0.05; transform: translateX(-50%) scale(0.95); }
-    100% { opacity: 0.2; transform: translateX(-50%) scale(1.05); }
-  }
-
+  
   .mystic-hand {
     position: absolute; width: 160px; z-index: 6; opacity: 0.3;
     filter: grayscale(1) contrast(1.2) drop-shadow(0 0 5px #00ff66);
@@ -106,12 +105,32 @@
   /* --- PERSONAJE EXTERNO --- */
   #walking-sprite {
     position: fixed;
-    bottom: 20px;
+    bottom: 50px; /* Un poco más arriba para que no lo tape la barra del móvil */
     left: -150px;
     width: 150px;
     z-index: 100;
     pointer-events: none;
     transition: opacity 2s ease;
+  }
+
+  /* --- AJUSTES PARA MÓVIL (PANTALLAS PEQUEÑAS) --- */
+  @media (max-width: 480px) {
+    .card-container {
+      transform: scale(0.85); /* Acerca la carta aumentando su tamaño visual relativo */
+      margin-top: -50px; /* La sube un poco para dejar espacio al muñeco */
+    }
+    
+    #walking-sprite {
+      width: 180px; /* Muñeco más grande en móvil */
+      bottom: 30px;
+    }
+  }
+
+  /* Ajuste para pantallas muy pequeñas */
+  @media (max-height: 650px) {
+    .card-container {
+      transform: scale(0.75);
+    }
   }
 </style>
 </head>
@@ -150,26 +169,26 @@
 const mCanvas = document.getElementById('matrixCanvas');
 const mCtx = mCanvas.getContext('2d');
 
-mCanvas.width = window.innerWidth;
-mCanvas.height = window.innerHeight;
+function resizeMatrix() {
+  mCanvas.width = window.innerWidth;
+  mCanvas.height = window.innerHeight;
+}
+resizeMatrix();
 
 const binChars = ['0', '1'];
 const fontSize = 16;
-const columns = mCanvas.width / fontSize;
-const drops = Array.from({ length: columns }).fill(1);
+let columns = mCanvas.width / fontSize;
+let drops = Array.from({ length: columns }).fill(1);
 
 function drawMatrix() {
-  // Fondo semi-transparente para crear el efecto de rastro
   mCtx.fillStyle = 'rgba(1, 5, 1, 0.1)';
   mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
-
-  mCtx.fillStyle = '#00ff66'; // Verde Matrix
+  mCtx.fillStyle = '#00ff66';
   mCtx.font = fontSize + 'px monospace';
 
   for (let i = 0; i < drops.length; i++) {
     const text = binChars[Math.floor(Math.random() * binChars.length)];
     mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-
     if (drops[i] * fontSize > mCanvas.height && Math.random() > 0.975) {
       drops[i] = 0;
     }
@@ -212,43 +231,33 @@ let state = 'walking';
 let laps = 0;
 let animationTimer = 0;
 
-// VARIABLES CONFIGURABLES
-const moveSpeed = 1.2;
-const totalLapsToFinish = 40;
-const saludoRepeatsPerStop = 3; // Repite el saludo 3 veces por parada
+const moveSpeed = 1.5; // Un poco más rápido para pantallas pequeñas
+const saludoRepeatsPerStop = 3;
 let currentSaludoCount = 0;
 
 function animateAll() {
   animationTimer++;
-
-  // Dibujar fondos
   drawMatrix();
   drawMoney();
 
-  // Lógica de estados del personaje
   if (state === 'walking') {
     xPos += moveSpeed;
     sprite.style.left = xPos + 'px';
-
-    if (animationTimer % 12 === 0) {
+    if (animationTimer % 10 === 0) {
       currentFrame++;
       if (currentFrame > 7) {
         currentFrame = 1;
-        state = 'greeting'; // Parar para saludar
-        
+        state = 'greeting';
         currentSaludoCount = 0;
       }
       sprite.src = `fotogramas-alejo/${currentFrame}.png`;
     }
-
   } else if (state === 'greeting') {
-    // Se queda quieto (xPos no aumenta)
     if (animationTimer % 10 === 0) {
       currentFrame++;
       if (currentFrame > 10) {
         currentFrame = 1;
         currentSaludoCount++;
-        
         if (currentSaludoCount >= saludoRepeatsPerStop) {
           state = 'walking';
           laps++;
@@ -258,28 +267,19 @@ function animateAll() {
     }
   }
 
-  // Desvanecimiento final
-  if (laps >= (totalLapsToFinish * 25)) {
-    sprite.style.opacity = '0';
-  }
-
-  // Reinicio de pantalla
   if (xPos > window.innerWidth) {
-    xPos = -150;
+    xPos = -180;
   }
-
   requestAnimationFrame(animateAll);
 }
 
-// Ajustar canvas de matrix al cambiar tamaño de ventana
 window.onresize = () => {
-  mCanvas.width = window.innerWidth;
-  mCanvas.height = window.innerHeight;
+  resizeMatrix();
+  columns = mCanvas.width / fontSize;
+  drops = Array.from({ length: columns }).fill(1);
 };
 
-// Iniciar bucle principal
 animateAll();
-
 </script>
 </body>
 </html>
