@@ -2,7 +2,7 @@ name: Deploy Static Content
 
 on:
   push:
-    branches: ["main"] # Asegúrate de que tu rama se llame main
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -22,18 +22,32 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # Aquí es donde ocurre la "magia" de limpieza
       - name: Prepare Files
         run: |
+          # 1. Crear la carpeta donde irá la web final
           mkdir public
+          
+          # 2. Copiar el archivo principal
           cp index.html public/
-          # Si tienes carpetas de imágenes o assets, cópialas aquí:
-          # cp -r imagenes public/ 2>/dev/null || : 
+          
+          # 3. Copiar todas las imágenes PNG (insensible a mayúsculas/minúsculas)
+          cp *.png public/ 2>/dev/null || :
+          cp *.PNG public/ 2>/dev/null || :
+          cp *.jpg public/ 2>/dev/null || :
+          cp *.JPG public/ 2>/dev/null || :
+          
+          # 4. Copiar las carpetas de animaciones completas
+          # Usamos -r para que sea recursivo (copia todo lo de adentro)
+          cp -r fotogramas-alejo public/ 2>/dev/null || :
+          cp -r saludo public/ 2>/dev/null || :
+          
+          echo "Archivos preparados con éxito en la carpeta public."
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './public' # Solo publica la carpeta limpia
+          # IMPORTANTE: Solo se publica lo que está en /public
+          path: './public'
 
       - name: Deploy to GitHub Pages
         id: deployment
